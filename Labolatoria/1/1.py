@@ -7,15 +7,25 @@ def update_adjacency_matrix(graph):
     return adjacency_matrix
 
 def create_graph(matrix):
-    return nx.Graph(matrix)
+    return nx.MultiGraph(matrix)
 
 def create_directed_graph(matrix):
-    return nx.DiGraph(matrix)
+    return nx.MultiDiGraph(matrix)
 
 def plot_graph(graph):
     position = nx.spring_layout(graph)
     nx.draw(graph, position, with_labels=True)
+    adjacency_matrix = update_adjacency_matrix(graph)
+    def get_edge_list(adjacency_matrix):
+        edge_list = []
+        for i in range(len(adjacency_matrix)):
+            for j in range(len(adjacency_matrix)):
+                if adjacency_matrix[i][j] != 0:
+                    for k in range(adjacency_matrix[i][j]):
+                        edge_list.append((i, j))
+        return edge_list
     plt.show()
+    print(get_edge_list(adjacency_matrix))
 
 def add_node(graph):
     try:
@@ -67,7 +77,7 @@ def show_node_degree(graph):
     try:
         node = int(input("Which node to show degree?: "))
         degree = graph.degree(node)
-        if isinstance(graph, nx.DiGraph):
+        if isinstance(graph, nx.MultiDiGraph):
             incoming_degree = graph.in_degree(node)
             outgoing_degree = graph.out_degree(node)
             print(f"Outcoming Degree: {outgoing_degree}, Incoming Degree: {incoming_degree}")
@@ -114,30 +124,22 @@ def print_pretty_adjacency_matrix(adjacency_matrix):
             print(f"{int(adjacency_matrix[i, j]):>6} ", end="")
         print("\n")
 
-def edge_list_to_adjacency_matrix(edge_list, num_nodes):
+def edge_list_to_adjacency_matrix(graph_type, edge_list, num_nodes):
     adjacency_matrix = [[0] * num_nodes for _ in range(num_nodes)]
-    for edge in edge_list:
-        node1, node2 = edge
-        adjacency_matrix[node1 - 1][node2 - 1] = 1
-        adjacency_matrix[node2 - 1][node1 - 1] = 1
+    print(edge_list, num_nodes)
+    if graph_type == "1":
+        for edge in edge_list:
+            node1, node2 = edge
+            adjacency_matrix[node1 - 1][node2 - 1] += 1
+            adjacency_matrix[node2 - 1][node1 - 1] += 1
+    elif graph_type == "2":
+        for edge in edge_list:
+            node1, node2 = edge
+            adjacency_matrix[node1 - 1][node2 - 1] += 1
 
+    print(adjacency_matrix)
     return adjacency_matrix
 
-import networkx as nx
-
-# def has_c3_subgraph(graph):
-#     # Iterate through all nodes to find C3 subgraph
-#     for node in graph.nodes():
-#         neighbors = list(graph.neighbors(node))
-#         for neighbor1 in neighbors:
-#             for neighbor2 in neighbors:
-#                 if neighbor1 != neighbor2 and graph.has_edge(neighbor1, neighbor2):
-#                     # Found a C3 subgraph, you can return it here or just return True
-#                     print(f"C3 subgraph found: {node}, {neighbor1}, {neighbor2}")
-#                     return True
-#     # No C3 subgraph found
-#     print("No C3 subgraph found.")
-#     return False
 def find_c3_cycle_naive(graph):
     matrix = nx.to_numpy_array(graph, dtype=int)
     n = len(matrix)
@@ -169,21 +171,53 @@ def find_c3_cycle_matrix_multiplication(graph):
             if matrix[i, node] > 0 and matrix_squared[temp, node] > 0:
                 print(f'Found C3 cycle, nodes: , {labels_list[i]}, {labels_list[temp]}, {labels_list[node]}')    
                 return [i, temp, node]
+            
+def add_row_to_dfs_tree(dfs_tree):
+    new_row = [0] * len(dfs_tree[0])
+
+def show_dfs_tree(graph, node, visited, dfs_tree):
+    def dfs(graph, node, visited, dfs_tree):
+        dfs_tree_matrix = [[]]
+        matrix = nx.to_numpy_array(graph, dtype=int)
+        def find_neighbours(node):
+            neighbours = []
+            row = matrix[node]
+            for index, connection in enumerate(row):
+                if connection == 1:
+                    neighbours.append(index)
+            return neighbours
+        
+        if node not in visited:
+            visited.add(node)
+            neighbours = find_neighbours(node)
+            for neighbor in neighbours:
+                if neighbor not in visited:
+                    dfs_tree.add_edge(node, neighbor)
+                    dfs_tree_matrix
+                    dfs(graph, neighbor, visited, dfs_tree)
+
+    dfs(graph, node, visited, dfs_tree)
+
+    pos = nx.spring_layout(dfs_tree)
+    nx.draw(dfs_tree, pos, with_labels=True, node_size=500, node_color='lightgreen')
+    print(update_adjacency_matrix(dfs_tree))
+    plt.show()
     
 running = True
+
 
 if __name__ == "__main__":
     with(open("./input.txt", "r")) as file:
         edge_list = np.loadtxt(file, dtype=int)
         print(edge_list)
+        print("""Choose a graph type:
+                1. Undirected
+                2. Directed
+                """)
+        graph_type = input("Enter your choice: ")
         num_nodes = max(max(edge) for edge in edge_list)
-        adjacency_matrix = edge_list_to_adjacency_matrix(edge_list, num_nodes)
+        adjacency_matrix = edge_list_to_adjacency_matrix(graph_type, edge_list, num_nodes)
         adjacency_matrix = np.array(adjacency_matrix)
-    print("""Choose a graph type:
-             1. Undirected
-             2. Directed
-             """)
-    graph_type = input("Enter your choice: ")
     if graph_type == "1":
         print(adjacency_matrix)
         graph = create_graph(adjacency_matrix)
@@ -205,12 +239,15 @@ if __name__ == "__main__":
             11. Print adjacency matrix
             12. Check if graph has C3 subgraph (naive)
             13. Check if graph has C3 subgraph (matrix multiplication)
-            14. Exit
+            14. DFS
+            15. Exit
         """)
 
         option = input("Enter your choice: ")
 
         if option == "1":
+            for neighbour in graph.neighbors(0):
+                print(type(neighbour))
             add_node(graph)
         elif option == "2":
             remove_node(graph)
@@ -237,7 +274,9 @@ if __name__ == "__main__":
             find_c3_cycle_naive(graph)
         elif option == '13':
             find_c3_cycle_matrix_multiplication(graph)
-        elif option == "14":
+        elif option == '14':
+            show_dfs_tree(graph, 1, set(), nx.MultiGraph())
+        elif option == "15":
             print("Thank you for using this program. Have a great day!")
             break
         else:
