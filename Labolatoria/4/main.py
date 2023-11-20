@@ -1,6 +1,4 @@
 import numpy as np
-# import networkx as nx
-# import matplotlib.pyplot as plt
 
 def edge_list_to_adjacency_matrix(edge_list, num_nodes):
     adjacency_matrix = [[0] * num_nodes for _ in range(num_nodes)]
@@ -39,20 +37,6 @@ def build_weighted_graph(nodes_edges, edge_list_with_weights):
 
     return np.array(adjacency_matrix)
 
-# def plot_wieghted_graph(adjacency_matrix):
-#     G = nx.Graph()
-
-#     for i in range(len(adjacency_matrix)):
-#         for j in range(i, len(adjacency_matrix[i])):
-#             if adjacency_matrix[i][j] != 0:
-#                 G.add_edge(i, j, weight=adjacency_matrix[i][j])
-
-#     pos = nx.spring_layout(G) 
-#     labels = nx.get_edge_attributes(G, 'weight')
-#     nx.draw(G, pos, with_labels=True, node_size=300, node_color='lightblue')
-#     nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-#     plt.show()
-
 def check_connected_graph(graph_matrix):
     def dfs(node):
         visited[node] = True
@@ -71,13 +55,12 @@ def check_connected_graph(graph_matrix):
 
 def prims_algorithm(nodes_and_edges, edge_list):
     visited = set()
-    nodes_added_num = 0
     spanning_tree = []
     nodes_num = nodes_and_edges[0]
 
     final_weight = 0
     sorted_edge_list = sorted(edge_list, key=lambda item: item[2])
-    while nodes_added_num < nodes_num - 1:
+    for node in range(nodes_num):
         visited.add(sorted_edge_list[0][0])
         for edge in sorted_edge_list:
             node1, node2, weight = edge
@@ -85,7 +68,6 @@ def prims_algorithm(nodes_and_edges, edge_list):
                 visited.add(node1)
                 visited.add(node2)
                 spanning_tree.append(edge)
-                nodes_added_num += 1
                 break
     for element in spanning_tree:
         final_weight += element[2]
